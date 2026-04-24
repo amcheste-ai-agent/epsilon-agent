@@ -16,6 +16,17 @@
 #   CLAUDE_GH_APP_ID                numeric GitHub App ID
 #   CLAUDE_GH_APP_PRIVATE_KEY_PATH  path to the App's .pem private key
 #
+# Optional env vars (installation selection, highest priority first):
+#   CLAUDE_GH_APP_INSTALLATION_ID   exact installation ID to mint for
+#   CLAUDE_GH_APP_OWNER             GitHub login (user or org) — installation
+#                                   for that owner is resolved automatically
+#
+# If neither is set, the script inspects the current directory: when run
+# inside a git repo with a github.com origin, it uses that repo's owner.
+# As a last resort it falls back to the first installation the App has.
+# That fallback is ambiguous when the App has multiple installations —
+# set CLAUDE_GH_APP_OWNER explicitly to avoid surprises.
+#
 # Dependencies: bash, openssl, curl. No Python, Node, or jq required.
 
 set -euo pipefail
@@ -55,47 +66,86 @@ api() {
     curl -sS -w $'\n%{http_code}' "$@"
 }
 
-parse_response() {
-    local response="$1" expected="$2" description="$3"
-    local http_code="${response##*$'\n'}"
-    local body="${response%$'\n'*}"
-    if [ "$http_code" != "$expected" ]; then
-        die "$description failed (HTTP $http_code): $body"
-    fi
-    printf '%s' "$body"
+# Splits `curl -w \n%{http_code}` output into __body and __code.
+__body=""
+__code=""
+split_response() {
+    __body="${1%$'\n'*}"
+    __code="${1##*$'\n'}"
 }
 
-installations_response=$(api \
-    -H "Authorization: Bearer $jwt" \
-    -H "Accept: application/vnd.github+json" \
-    -H "X-GitHub-Api-Version: 2022-11-28" \
-    https://api.github.com/app/installations) \
-    || die "network error while listing installations"
+extract_first_id() {
+    grep -Eo '"id"[[:space:]]*:[[:space:]]*[0-9]+' \
+        | head -1 \
+        | grep -Eo '[0-9]+'
+}
 
-installations_body=$(parse_response "$installations_response" "200" "listing installations")
+extract_token() {
+    grep -Eo '"token"[[:space:]]*:[[:space:]]*"[^"]+"' \
+        | head -1 \
+        | sed -E 's/.*"token"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/'
+}
 
-installation_id=$(printf '%s' "$installations_body" \
-    | grep -Eo '"id"[[:space:]]*:[[:space:]]*[0-9]+' \
-    | head -1 \
-    | grep -Eo '[0-9]+')
+# Resolve target owner from env var or current git repo
+target_owner="${CLAUDE_GH_APP_OWNER:-}"
+if [ -z "$target_owner" ]; then
+    if git_url=$(git config --get remote.origin.url 2>/dev/null); then
+        case "$git_url" in
+            *github.com*)
+                target_owner=$(printf '%s' "$git_url" \
+                    | sed -nE 's|.*github\.com[:/]+([^/]+)/.*|\1|p')
+                ;;
+        esac
+    fi
+fi
 
-[ -n "${installation_id:-}" ] \
+installation_id="${CLAUDE_GH_APP_INSTALLATION_ID:-}"
+
+# Look up installation by owner (tries /users then /orgs)
+if [ -z "$installation_id" ] && [ -n "$target_owner" ]; then
+    for endpoint in users orgs; do
+        resp=$(api \
+            -H "Authorization: Bearer $jwt" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/$endpoint/$target_owner/installation") \
+            || die "network error while looking up installation for $target_owner"
+        split_response "$resp"
+        if [ "$__code" = "200" ]; then
+            installation_id=$(printf '%s' "$__body" | extract_first_id)
+            break
+        fi
+    done
+    [ -n "$installation_id" ] \
+        || die "App $CLAUDE_GH_APP_ID is not installed on $target_owner (no user or org match)"
+fi
+
+# Fallback: first installation from the global list (ambiguous if >1)
+if [ -z "$installation_id" ]; then
+    resp=$(api \
+        -H "Authorization: Bearer $jwt" \
+        -H "Accept: application/vnd.github+json" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        https://api.github.com/app/installations) \
+        || die "network error while listing installations"
+    split_response "$resp"
+    [ "$__code" = "200" ] || die "listing installations failed (HTTP $__code): $__body"
+    installation_id=$(printf '%s' "$__body" | extract_first_id)
+fi
+
+[ -n "$installation_id" ] \
     || die "no installation found for App $CLAUDE_GH_APP_ID — install the App on at least one account"
 
-token_response=$(api -X POST \
+resp=$(api -X POST \
     -H "Authorization: Bearer $jwt" \
     -H "Accept: application/vnd.github+json" \
     -H "X-GitHub-Api-Version: 2022-11-28" \
     "https://api.github.com/app/installations/${installation_id}/access_tokens") \
     || die "network error while minting installation token"
+split_response "$resp"
+[ "$__code" = "201" ] || die "minting installation token failed (HTTP $__code): $__body"
 
-token_body=$(parse_response "$token_response" "201" "minting installation token")
-
-token=$(printf '%s' "$token_body" \
-    | grep -Eo '"token"[[:space:]]*:[[:space:]]*"[^"]+"' \
-    | head -1 \
-    | sed -E 's/.*"token"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')
-
-[ -n "${token:-}" ] || die "token missing in installation response"
+token=$(printf '%s' "$__body" | extract_token)
+[ -n "$token" ] || die "token missing in installation response"
 
 printf '%s\n' "$token"

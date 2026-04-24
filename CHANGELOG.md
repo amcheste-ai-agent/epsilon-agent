@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- `scripts/gh-app-token.sh` now resolves which installation to mint against in this order: `CLAUDE_GH_APP_INSTALLATION_ID`, `CLAUDE_GH_APP_OWNER`, the owner of the current git repo's `origin` remote, and finally the first installation the App has (unchanged fallback). Fixes the ambiguity when the App is installed on more than one account.
+
 ## [0.1.0] - 2026-04-24
 
 ### Added
