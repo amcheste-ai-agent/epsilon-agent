@@ -1,0 +1,24 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editors
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Secrets — the App's private key must never be committed to any repo.
+# This pattern belongs in ~/.claude/secrets, never here.
+*.pem
+*.key
+.secrets
+secrets/
+.env
+.env.*
+
+# Shell history
+.bash_history
+.zsh_history

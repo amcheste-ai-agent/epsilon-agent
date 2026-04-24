@@ -1,0 +1,19 @@
+{
+  "name": "Epsilon Agent",
+  "description": "Personal AI coding agent built on Claude Code. Commits as a dedicated bot account and keeps a clean audit trail separating AI-authored work from human-authored work. This manifest is a template — edit the name, url, and redirect_url before registering your own instance.",
+  "url": "https://github.com/YOUR-BOT-USERNAME/epsilon-agent",
+  "redirect_url": "https://github.com/YOUR-BOT-USERNAME/epsilon-agent",
+  "hook_attributes": {
+    "url": "https://example.invalid/webhook",
+    "active": false
+  },
+  "public": true,
+  "default_permissions": {
+    "contents": "write",
+    "pull_requests": "write",
+    "metadata": "read",
+    "issues": "write",
+    "workflows": "write"
+  },
+  "default_events": []
+}
