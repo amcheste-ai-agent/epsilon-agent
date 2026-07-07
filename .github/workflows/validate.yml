@@ -130,19 +130,19 @@ jobs:
               major)
                 echo "## ⚠️ Suggested bump: \`major\`"
                 echo ""
-                echo "This PR contains **breaking changes** — increment the major version."
+                echo "This PR contains **breaking changes**; increment the major version."
                 printf "%b\n" "$BREAKING"
                 ;;
               minor)
                 echo "## ✨ Suggested bump: \`minor\`"
                 echo ""
-                echo "This PR adds **new functionality** — increment the minor version."
+                echo "This PR adds **new functionality**; increment the minor version."
                 printf "%b\n" "$FEATURES"
                 ;;
               patch)
                 echo "## 🔧 Suggested bump: \`patch\`"
                 echo ""
-                echo "This PR is a **fix or maintenance** change — increment the patch version."
+                echo "This PR is a **fix or maintenance** change; increment the patch version."
                 ;;
             esac
             echo ""
