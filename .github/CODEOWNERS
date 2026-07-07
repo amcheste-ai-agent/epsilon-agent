@@ -1,0 +1,4 @@
+# Every PR in this repo auto-requests Alan as reviewer. Since PRs here are
+# typically authored by the bot (amcheste-ai-agent), this is the mechanism
+# that keeps a human in the loop before anything merges.
+* @amcheste

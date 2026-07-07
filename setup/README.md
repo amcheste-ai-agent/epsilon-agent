@@ -24,7 +24,7 @@ Turn on two-factor authentication for the bot account before anything else.
 
 While logged in to GitHub **as the bot account**:
 
-1. Go to https://github.com/settings/apps/new
+1. Go to <https://github.com/settings/apps/new>
 2. Use [`app-manifest.json`](app-manifest.json) as a starting point for the
    permissions and metadata. Edit the `name`, `url`, and `redirect_url`
    fields before submitting.

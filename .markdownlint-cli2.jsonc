@@ -1,0 +1,13 @@
+{
+  // Markdownlint config for the handbook. Style rules that fight prose
+  // (long lines, inline HTML for the README hero) are off; structural
+  // rules that catch real mistakes stay on.
+  "config": {
+    "MD013": false, // line length; prose wraps naturally
+    "MD033": false, // inline HTML; some READMEs use inline HTML
+    "MD041": false, // first line must be a heading; READMEs may start with a banner
+    "MD024": { "siblings_only": true }, // repeated headings OK across sections (CHANGELOG)
+    "MD060": false // compact `|---|` table separators are the house style
+  },
+  "ignores": ["node_modules"]
+}
