@@ -1,0 +1,29 @@
+name: Gitleaks
+
+# CI backstop for the secret-scanning baseline. The primary defense is the
+# gitleaks pre-commit hook (.pre-commit-config.yaml); this catches commits
+# from contributors without hooks installed, --no-verify bypasses, and
+# automation sessions that don't run local hooks. See
+# docs/philosophies/security-posture.md §4 for the three-layer model.
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  gitleaks:
+    name: Gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

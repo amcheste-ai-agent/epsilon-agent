@@ -26,7 +26,7 @@ grants the App access to its repos. Neither bleeds into the other's domain.
 This separation is intentional. It makes the audit trail clean, the security
 boundary clear, and the pattern easy to reason about.
 
-```
+```text
   ┌─────────────────────┐                     ┌─────────────────────┐
   │  amcheste-ai-agent  │                     │      amcheste       │
   │     (the bot)       │                     │    (the human)      │
@@ -49,7 +49,7 @@ have a fully self-contained instance with no dependency on
 
 ## Repository layout
 
-```
+```text
 epsilon-agent/
 ├── scripts/
 │   └── gh-app-token.sh    Mint a short-lived installation token for the App
