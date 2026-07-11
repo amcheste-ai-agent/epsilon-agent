@@ -35,9 +35,9 @@ read -r -p "Bot GitHub username: " BOT_USER
 read -r -p "Bot numeric user ID (gh api /users/$BOT_USER --jq .id): " BOT_ID
 read -r -p "Path to downloaded .pem private key: " PEM_SRC
 
-[ -n "$APP_ID" ] && [[ "$APP_ID" =~ ^[0-9]+$ ]] || err "App ID must be numeric"
+if [ -z "$APP_ID" ] || [[ ! "$APP_ID" =~ ^[0-9]+$ ]]; then err "App ID must be numeric"; fi
 [ -n "$BOT_USER" ] || err "bot username is required"
-[ -n "$BOT_ID" ] && [[ "$BOT_ID" =~ ^[0-9]+$ ]] || err "bot user ID must be numeric"
+if [ -z "$BOT_ID" ] || [[ ! "$BOT_ID" =~ ^[0-9]+$ ]]; then err "bot user ID must be numeric"; fi
 PEM_SRC="${PEM_SRC/#\~/$HOME}"
 [ -r "$PEM_SRC" ] || err "cannot read $PEM_SRC"
 
